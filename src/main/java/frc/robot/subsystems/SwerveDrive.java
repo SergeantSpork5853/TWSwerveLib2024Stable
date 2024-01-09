@@ -186,7 +186,7 @@ public class SwerveDrive extends SubsystemBase
   //Drive the robot with the robot's front always being forward
   private void driveRobotOriented(ChassisSpeeds robotRelativeSpeeds)
   {
-    SwerveModuleState[] targetStates = kinematics.toSwerveModuleStates(robotRelativeSpeeds);
+    SwerveModuleState[] targetStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(robotRelativeSpeeds.vxMetersPerSecond, robotRelativeSpeeds.vyMetersPerSecond, -robotRelativeSpeeds.omegaRadiansPerSecond));
     setModuleStates(targetStates);
   }
 
@@ -229,8 +229,7 @@ public class SwerveDrive extends SubsystemBase
    */
   public Pose2d getPose()
     { 
-      Pose2d pose = odometry.getPoseMeters();
-      return new Pose2d( pose.getX(), pose.getY(), pose.getRotation().times(-1)); 
+      return odometry.getPoseMeters();   
     } 
 
   /* 

@@ -11,6 +11,7 @@ import frc.robot.subsystems.SwerveDrive;
 import java.util.List;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -33,7 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here... 
-  private final SwerveDrive driveBase = new SwerveDrive(3, 2 * Math.PI, "geared upright", Constants.kinematics, Constants.config); 
+  private final SwerveDrive driveBase = new SwerveDrive(3, 2 * Math.PI, "geared flipped", Constants.kinematics, Constants.config); 
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driver = new CommandXboxController(OperatorConstants.DriverControllerPort);
@@ -89,28 +90,9 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     //driveBase.brakeMode();
-    return new RunCommand(() -> {Pose2d currentPose = driveBase.getPose();
-      
-      // The rotation component in these poses represents the direction of travel
-      Pose2d startPos = new Pose2d(currentPose.getTranslation(), new Rotation2d());
-      Pose2d midPos = new Pose2d(currentPose.getTranslation().plus(new Translation2d(4.0, 0.0)), new Rotation2d());
-      Pose2d midPos2 = new Pose2d(currentPose.getTranslation().plus(new Translation2d(3, -1.0)), new Rotation2d());
-      Pose2d midPos3 = new Pose2d(currentPose.getTranslation().plus(new Translation2d(4, -1.0)), new Rotation2d());
-      Pose2d endPos = new Pose2d(currentPose.getTranslation().plus(new Translation2d(0.0, 0.0)), new Rotation2d());
-
-      List<Translation2d> bezierPoints = PathPlannerPath.bezierFromPoses(startPos, midPos);
-      PathPlannerPath path = new PathPlannerPath(
-        bezierPoints, 
-        new PathConstraints(
-          1.0, 2.0, 
-          Units.degreesToRadians(180), Units.degreesToRadians(360)
-        ),  
-        new GoalEndState(0.0, new Rotation2d(Units.degreesToRadians(90)))
-      );
-
-      AutoBuilder.followPathWithEvents(path).schedule();}, driveBase);
-    
+    return new PathPlannerAuto("New Auto");
     }
+
   double getXSpeed(){ 
     int pov = driver.getHID().getPOV();
     double finalX;
