@@ -77,7 +77,7 @@ public class SwerveDrive extends SubsystemBase
       * Initialize the odometry (if this is done outside of the constructor it will pass garbage values 
       * for the distances of the Swerve Modules). 
       */
-      odometry = new SwerveDriveOdometry(kinematics, Rotation2d.fromDegrees(getGyroAngle()), getSwerveModulePositions());
+      odometry = new SwerveDriveOdometry(kinematics, gyro.getRotation2d(), getSwerveModulePositions());
           
   }
 
@@ -109,7 +109,7 @@ public class SwerveDrive extends SubsystemBase
       * Initialize the odometry (if this is done outside of the constructor it will pass garbage values 
       * for the distances of the Swerve Modules). 
       */
-      odometry = new SwerveDriveOdometry(kinematics, Rotation2d.fromDegrees(getGyroAngle()), getSwerveModulePositions());
+      odometry = new SwerveDriveOdometry(kinematics, gyro.getRotation2d(), getSwerveModulePositions());
       
       //Initialize a PathPlanner AutoBuilder object for autonomous driving
       AutoBuilder.configureHolonomic(this::getPose, this::resetPose, this::getChassisSpeeds, this::driveRobotOriented, config, this);
@@ -186,7 +186,9 @@ public class SwerveDrive extends SubsystemBase
   //Drive the robot with the robot's front always being forward
   private void driveRobotOriented(ChassisSpeeds robotRelativeSpeeds)
   {
-    SwerveModuleState[] targetStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(robotRelativeSpeeds.vxMetersPerSecond, robotRelativeSpeeds.vyMetersPerSecond, -robotRelativeSpeeds.omegaRadiansPerSecond));
+    ChassisSpeeds targetSpeeds = ChassisSpeeds.discretize(robotRelativeSpeeds, .02);
+
+    SwerveModuleState[] targetStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond, -targetSpeeds.omegaRadiansPerSecond));
     setModuleStates(targetStates);
   }
 
@@ -198,7 +200,7 @@ public class SwerveDrive extends SubsystemBase
         ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed * maxVelocity, 
                                               ySpeed * maxVelocity, 
                                               rotationSpeed * maxAngularSpeed, 
-                                              Rotation2d.fromDegrees(getGyroAngle())) 
+                                              gyro.getRotation2d()) 
         : new ChassisSpeeds(xSpeed, 
                             ySpeed, 
                             rotationSpeed)); 
@@ -210,7 +212,7 @@ public class SwerveDrive extends SubsystemBase
   //Update the odometry values using the latest reported SwerveModule postitions and robot heading
   private void updateOdometry()
     { 
-       odometry.update( Rotation2d.fromDegrees(getGyroAngle()), getSwerveModulePositions());
+       odometry.update( gyro.getRotation2d(), getSwerveModulePositions());
     }
 
   /**
@@ -220,7 +222,7 @@ public class SwerveDrive extends SubsystemBase
   public void setStartLocation(Pose2d pose) 
     {
       gyro.setAngleAdjustment(pose.getRotation().getDegrees() - getGyroAngle());
-      odometry.resetPosition(Rotation2d.fromDegrees(getGyroAngle()), getSwerveModulePositions(), getPose());
+      odometry.resetPosition(gyro.getRotation2d(), getSwerveModulePositions(), getPose());
     }  
 
   /**
@@ -274,13 +276,13 @@ public class SwerveDrive extends SubsystemBase
   public void zeroPose()
     {
       System.out.println("resetting pose");
-      odometry.resetPosition(Rotation2d.fromDegrees(getGyroAngle()), getSwerveModulePositions(), new Pose2d(0.0, 0.0, Rotation2d.fromDegrees(getGyroAngle())));
+      odometry.resetPosition(gyro.getRotation2d(), getSwerveModulePositions(), new Pose2d(0.0, 0.0, gyro.getRotation2d()));
     }
 
   //A Pose2d consumer required for PathPlanner
   public void resetPose(Pose2d pose)
   {
-    odometry.resetPosition(Rotation2d.fromDegrees(getGyroAngle()), getSwerveModulePositions(), pose);
+    odometry.resetPosition(gyro.getRotation2d(), getSwerveModulePositions(), pose);
   }
 
   //A getter of the robot's speed relative to itself
